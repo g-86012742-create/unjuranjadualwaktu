@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>CADANGAN UNJURAN JADUAL WAKTU 2026 </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin:20px; background:#f8fafc; color:#0f172a }
+    h1,h2{ margin:8px 0 }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; background:#fff }
+    th, td { border: 1px solid #334155; padding: 8px; text-align: center; }
+    th { background: #f1f5f9; }
+    /* Gaya tambahan untuk jadual Subjek Utama */
+    .header-utama { background:#f59e0b; color:#fff; font-weight:bold; }
+    .subhead-utama { background:#ffedd5; font-weight:bold; }
+    .bord-utama th, .bord-utama td { border:2px solid #f59e0b; }
+    .wrapper-scroll { max-height: 520px; overflow: auto; border:2px solid #f59e0b; border-radius:8px; background:#fff }
+    .wrapper-scroll thead th { position: sticky; top: 0; z-index: 2; }
+    .tingkatan-row td { background:#fde68a; font-weight:bold; text-align:left; }
+    /* Kawalan ringkas */
+    .btn { padding:6px 10px; border:1px solid #0f172a; background:#e2e8f0; cursor:pointer; border-radius:6px; }
+    .btn:hover { background:#cbd5e1; }
+    .btn-sm { padding:4px 8px; font-size:12px; }
+    .btn-danger{ background:#fee2e2; border-color:#dc2626 }
+    .btn-danger:hover{ background:#fecaca }
+    .btn-ghost{ background:#ffffff; }
+    .table-simple { border-collapse: collapse; width:100%; margin-top:10px; }
+    .table-simple th, .table-simple td { border:1px solid #334155; padding:6px; text-align:center; }
+    .table-simple th { background:#f8fafc; }
+    .input-sm { padding:6px; width:100%; box-sizing:border-box; }
+    .wrapper-scroll-sm { max-height: 360px; overflow: auto; border:2px solid #f59e0b; border-radius:8px; background:#fff }
+    .wrapper-scroll-sm thead th { position: sticky; top: 0; z-index: 2; background:#f8fafc; }
+    /* SING kolum lebih padat */
+    .col-sing { white-space: nowrap; width:1%; }
+    .in-sing { width: 110px; box-sizing: border-box; text-transform:uppercase }
+    /* Inputs untuk senarai subjek */
+    .in-subj-name, .in-subj-sing { width: 100%; box-sizing: border-box; padding:6px; text-transform:uppercase }
+    /* SUBJEK kolum kecil */
+    .col-sub { white-space: nowrap; width:1%; }
+    .in-sub { width: 70px; box-sizing: border-box; }
+    /* Two-column responsive layout */
+    .two-cols { display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+    .two-cols .col { flex:1 1 380px; min-width:320px; }
+    .two-cols .col h2 { margin-top:0; }
+    /* Page header */
+    .page-header { background:#dbeafe; border:1px solid #93c5fd; border-radius:12px; padding:16px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px }
+    .page-title { margin:0; text-align:left; color:#1e3a8a; letter-spacing:0.5px; }
+    /* Summary boxes */
+    .summary-box { padding:12px; border-radius:12px; margin:8px 0 20px; border:1px solid transparent; background:#fff }
+    .summary-guru { background:#ecfeff; border-color:#22d3ee; }
+    .summary-kelas { background:#ecfccb; border-color:#84cc16; }
+    .summary-subjek { background:#fef9c3; border-color:#eab308; }
+    .summary-box table { width:100%; border-collapse:collapse; background:#fff }
+    .summary-box th, .summary-box td { border:1px solid #94a3b8; padding:6px; text-align:left; }
+    .summary-box th { background:#f8fafc; }
+    /* Section header with toggle */
+    .section-header { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .section-header h2 { margin:0; }
+    /* Toolbar */
+    .toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+    input[type="file"]{ display:none }
+    .file-label{ border:1px dashed #64748b; padding:6px 10px; border-radius:6px; cursor:pointer; background:#fff }
+    .muted{ color:#475569; font-size:13px }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <h1 class="page-title">CADANGAN UNJURAN JADUAL WAKTU 2026 </h1>
+    <div class="toolbar">
+      <button class="btn" id="btnExport">Export JSON</button>
+      <label class="file-label">
+        Import JSON <input type="file" id="fileImport" accept=".json,application/json" />
+      </label>
+      <button class="btn btn-danger" id="btnReset">Kosongkan Semua Data</button>
+      <span class="muted" id="lastSaved"></span>
+      <!-- GAS (Import dari Google Sheets) -->
+      <input type="text" id="gasUrlDemo" placeholder="Web App URL (GAS)" style="min-width:360px" />
+      <button class="btn" id="btnLoadGas">Muat dari Google Sheets</button>
+      <span class="muted" id="gasStatus"></span>
+    </div>
+  </header>
+
+  <div class="two-cols">
+    <div class="col">
+      <div class="section-header">
+        <h2>Pengisian Nama Guru</h2>
+        <button id="toggleGuru" class="btn btn-sm" type="button">Sembunyi</button>
+      </div>
+      <div id="guruSectionBody">
+        <input type="text" id="guruNama" placeholder="Nama penuh (cth: JASLEY A/P ...)" style="text-transform:uppercase; width:48%" />
+        <input type="text" id="guruSing" placeholder="Singkatan (cth: JASLEY)" style="text-transform:uppercase; width:25%" />
+        <button class="btn" onclick="addTeacher()">Tambah Guru</button>
+        <div class="wrapper-scroll-sm" style="margin-top:8px;">
+          <table id="tblGuru" class="table-simple"></table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="section-header">
+        <h2>Senarai Subjek & Singkatan</h2>
+        <button id="toggleSubjek" class="btn btn-sm" type="button">Sembunyi</button>
+      </div>
+      <div id="subjekSectionBody">
+        <input type="text" id="subjNama" placeholder="Nama subjek penuh" style="text-transform:uppercase; width:40%" />
+        <input type="text" id="subjSing" placeholder="Singkatan" style="text-transform:uppercase; width:25%" />
+        <button class="btn" onclick="addSubject()">Tambah Subjek</button>
+      </div>
+      <div class="wrapper-scroll-sm" style="margin-top:8px;">
+        <table id="tblSubjects" class="table-simple"></table>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="margin-top:18px;">Jadual Subjek Utama</h2>
+  <div class="wrapper-scroll">
+    <table id="jadualSubjekUtama" class="bord-utama"></table>
+  </div>
+
+  <h2>Rumusan Mengikut Guru</h2>
+  <div id="output" class="summary-box summary-guru"></div>
+
+  <h2>Rumusan Mengikut Kelas</h2>
+  <div id="outputKelas" class="summary-box summary-kelas"></div>
+
+  <h2>Rumusan Mengikut Subjek</h2>
+  <div id="outputSubjek" class="summary-box summary-subjek"></div>
+
+  <!-- Seksyen Bar Gap -->
+  <h2>Bar Gap</h2>
+  <div id="barGapRoot" style="margin-top:8px;"></div>
+
+<script>
+/* =======================
+   KONFIG OFFLINE & STORAGE
+   ======================= */
+let data = [];                       // rekod jadual disahkan + buffer baris input
+const TEACHERS = [];                 // {name, sing}
+let SUBJECTS_ALL = [];               // {name, sing}
+
+const CLASS_CODES = ["BER","NIL","ZAM","RAF","HIB","LAV","DAH","AKA","TUL","ORK","IXO"];
+const PERALIHAN_CODES = ["P1","P2"];
+const TINGKATAN_ORDER = [5,4,3,2,1,"PERALIHAN"];
+// fallback subjek jika SUBJECTS_ALL kosong
+const DEFAULT_SUBJECTS = ["BI","BM","MATEMATIK","SAINS","SEJARAH"];
+
+const LS_TEACHERS_KEY = 'rumusan_guru_teachers_v1';
+const LS_DATA_KEY     = 'rumusan_guru_data_v1';
+const LS_SUBJECTS_KEY = 'rumusan_guru_subjects_v1';
+const LS_HIDE_GURU_UI_KEY = 'rumusan_guru_hide_guru_ui_v1';
+const LS_HIDE_SUBJ_UI_KEY = 'rumusan_guru_hide_subj_ui_v1';
+const LS_SAVED_AT = 'rumusan_guru_last_saved_at_v1';
+
+/* ============== UTIL ============== */
+function normTingkatan(v){
+  const s = String(v ?? '').trim().toUpperCase();
+  if(!s) return '';
+  if(s === 'PERALIHAN') return 'PERALIHAN';
+  const n = parseInt(s, 10);
+  return Number.isFinite(n) ? String(n) : s;
+}
+function normKelas(v){ return String(v ?? '').trim().toUpperCase(); }
+function effectiveSubjects(){
+  if(Array.isArray(SUBJECTS_ALL) && SUBJECTS_ALL.length > 0) return SUBJECTS_ALL;
+  return DEFAULT_SUBJECTS.map(x=>({ name: String(x).toUpperCase(), sing: String(x).toUpperCase() }));
+}
+function stampSaved(){
+  const t = new Date().toLocaleString('ms-MY');
+  localStorage.setItem(LS_SAVED_AT, t);
+  const el = document.getElementById('lastSaved');
+  if(el) el.textContent = `Disimpan: ${t}`;
+}
+
+/* ============== PERSISTENSI ============== */
+function saveState(){
+  try{
+    localStorage.setItem(LS_TEACHERS_KEY, JSON.stringify(TEACHERS));
+    localStorage.setItem(LS_DATA_KEY, JSON.stringify(data));
+    const subjOut = (Array.isArray(SUBJECTS_ALL)?SUBJECTS_ALL:[]).map(s=>({
+      name:(s.name||'').toUpperCase(), sing:(s.sing||'').toUpperCase()
+    }));
+    localStorage.setItem(LS_SUBJECTS_KEY, JSON.stringify(subjOut));
+    stampSaved();
+  }catch(e){ console.warn('Gagal simpan ke localStorage:', e); }
+}
+function loadState(){
+  try{
+    const tStr = localStorage.getItem(LS_TEACHERS_KEY);
+    if(tStr){
+      const arr = JSON.parse(tStr);
+      if(Array.isArray(arr)){
+        TEACHERS.length = 0;
+        arr.forEach(x=>{
+          if(!x) return;
+          TEACHERS.push({
+            name: String(x.name||'').toUpperCase(),
+            sing: String(x.sing||x.name||'').toUpperCase()
+          });
+        });
+      }
+    }
+    const dStr = localStorage.getItem(LS_DATA_KEY);
+    if(dStr){
+      const arr = JSON.parse(dStr);
+      if(Array.isArray(arr)) data = arr;
+    }
+    const sStr = localStorage.getItem(LS_SUBJECTS_KEY);
+    if(sStr){
+      const arr = JSON.parse(sStr);
+      if(Array.isArray(arr)){
+        SUBJECTS_ALL = arr.map(x=>({
+          name:String(x.name||'').toUpperCase(),
+          sing:String(x.sing||x.name||'').toUpperCase()
+        })).filter(s=>s.name);
+      }
+    }
+    // label "Disimpan"
+    const savedAt = localStorage.getItem(LS_SAVED_AT)||'';
+    if(savedAt){ const el=document.getElementById('lastSaved'); if(el) el.textContent = `Disimpan: ${savedAt}`; }
+  }catch(e){ console.warn('Gagal muat dari localStorage:', e); }
+}
+
+/* ============== TOGGLE UI ============== */
+function applySectionVisibility(){
+  const hideGuru = localStorage.getItem(LS_HIDE_GURU_UI_KEY) === '1';
+  const hideSubj = localStorage.getItem(LS_HIDE_SUBJ_UI_KEY) === '1';
+  const guruBody = document.getElementById('guruSectionBody');
+  const subjBody = document.getElementById('subjekSectionBody');
+  const btnGuru = document.getElementById('toggleGuru');
+  const btnSubj = document.getElementById('toggleSubjek');
+  if(guruBody) guruBody.style.display = hideGuru ? 'none' : '';
+  if(subjBody) subjBody.style.display = hideSubj ? 'none' : '';
+  if(btnGuru) btnGuru.textContent = hideGuru ? 'Tunjuk' : 'Sembunyi';
+  if(btnSubj) btnSubj.textContent = hideSubj ? 'Tunjuk' : 'Sembunyi';
+}
+function initToggleUI(){
+  const btnGuru = document.getElementById('toggleGuru');
+  const btnSubj = document.getElementById('toggleSubjek');
+  if(btnGuru){
+    btnGuru.addEventListener('click', ()=>{
+      const cur = localStorage.getItem(LS_HIDE_GURU_UI_KEY) === '1';
+      localStorage.setItem(LS_HIDE_GURU_UI_KEY, cur ? '0' : '1');
+      applySectionVisibility();
+    });
+  }
+  if(btnSubj){
+    btnSubj.addEventListener('click', ()=>{
+      const cur = localStorage.getItem(LS_HIDE_SUBJ_UI_KEY) === '1';
+      localStorage.setItem(LS_HIDE_SUBJ_UI_KEY, cur ? '0' : '1');
+      applySectionVisibility();
+    });
+  }
+  applySectionVisibility();
+}
+
+/* ============== SUBJECTS ============== */
+function renderSubjects(){
+  const tbl = document.getElementById('tblSubjects');
+  if(!tbl) return;
+  let html = '<thead><tr><th>#</th><th>NAMA SUBJEK</th><th class="col-sing">SING</th><th>TINDAKAN</th></tr></thead><tbody>';
+  if(!Array.isArray(SUBJECTS_ALL) || SUBJECTS_ALL.length===0){
+    html += '<tr><td colspan="4">— Tiada subjek —</td></tr>';
+  } else {
+    SUBJECTS_ALL.forEach((s,i)=>{
+      const nm = (s.name||'').toUpperCase();
+      const sg = (s.sing||'').toUpperCase();
+      html += `<tr>
+        <td>${i+1}</td>
+        <td><input class="in-subj-name" data-idx="${i}" value="${nm}" /></td>
+        <td class="col-sing"><input class="in-subj-sing" data-idx="${i}" value="${sg}" /></td>
+        <td><button class="btn btn-ghost" onclick="removeSubject(${i})">Padam</button></td>
+      </tr>`;
+    });
+  }
+  html += '</tbody>';
+  tbl.innerHTML = html;
+
+  tbl.querySelectorAll('.in-subj-name').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const i = parseInt(inp.dataset.idx,10);
+      if(!Number.isFinite(i) || i<0 || i>=SUBJECTS_ALL.length) return;
+      SUBJECTS_ALL[i].name = (inp.value||'').trim().toUpperCase();
+      saveState(); buildJadual();
+    });
+  });
+  tbl.querySelectorAll('.in-subj-sing').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const i = parseInt(inp.dataset.idx,10);
+      if(!Number.isFinite(i) || i<0 || i>=SUBJECTS_ALL.length) return;
+      SUBJECTS_ALL[i].sing = (inp.value||'').trim().toUpperCase();
+      saveState(); buildJadual();
+    });
+  });
+}
+
+/* ============== GURU ============== */
+function renderTeacherTable(){
+  const tbl = document.getElementById('tblGuru');
+  if(!tbl) return;
+  let html = '<thead><tr><th>BIL</th><th>NAMA</th><th class="col-sing">SING</th><th>TINDAKAN</th></tr></thead><tbody>';
+  if(TEACHERS.length===0){
+    html += '<tr><td colspan="4">— Tiada nama guru —</td></tr>';
+  } else {
+    TEACHERS.forEach((t,i)=>{
+      html += `<tr>
+        <td>${i+1}</td>
+        <td><input class="input-sm in-nama" data-idx="${i}" value="${t.name}" style="text-transform:uppercase" /></td>
+        <td class="col-sing"><input class="input-sm in-sing" data-idx="${i}" value="${t.sing || ''}" /></td>
+        <td><button class="btn btn-ghost" onclick="removeTeacher(${i})">Padam</button></td>
+      </tr>`;
+    });
+  }
+  html += '</tbody>';
+  tbl.innerHTML = html;
+
+  tbl.querySelectorAll('.in-nama').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const idx = parseInt(inp.dataset.idx,10);
+      TEACHERS[idx].name = (inp.value||'').trim().toUpperCase();
+      buildJadual(); paparRumusan(); saveState();
+    });
+  });
+  tbl.querySelectorAll('.in-sing').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const idx = parseInt(inp.dataset.idx,10);
+      TEACHERS[idx].sing = (inp.value||'').trim().toUpperCase();
+      buildJadual(); paparRumusan(); saveState();
+    });
+  });
+}
+function addTeacher(){
+  const nInp = document.getElementById('guruNama');
+  const sInp = document.getElementById('guruSing');
+  const nama = (nInp.value||'').trim().toUpperCase();
+  const sing = (sInp.value||'').trim().toUpperCase();
+  if(!nama){ alert('Sila masukkan nama penuh guru.'); return; }
+  const exists = TEACHERS.some(t => t.name===nama || (sing && t.sing===sing));
+  if(exists){ alert('Nama atau singkatan telah wujud.'); return; }
+  TEACHERS.push({ name: nama, sing: sing || nama });
+  nInp.value=''; sInp.value='';
+  renderTeacherTable(); buildJadual(); paparRumusan(); saveState();
+}
+function removeTeacher(idx){
+  if(idx > -1 && idx < TEACHERS.length){
+    TEACHERS.splice(idx,1);
+    renderTeacherTable(); buildJadual(); paparRumusan(); saveState();
+  }
+}
+
+/* ============== SUBJEK CRUD ============== */
+function addSubject(){
+  const nInp = document.getElementById('subjNama');
+  const sInp = document.getElementById('subjSing');
+  const nama = (nInp.value||'').trim().toUpperCase();
+  const sing = (sInp.value||'').trim().toUpperCase();
+  if(!nama){ alert('Sila masukkan nama subjek.'); return; }
+  const exists = SUBJECTS_ALL.some(s => s.name===nama || s.sing===sing);
+  if(exists){ alert('Nama atau singkatan telah wujud.'); return; }
+  SUBJECTS_ALL.push({ name: nama, sing: sing || nama });
+  nInp.value=''; sInp.value='';
+  renderSubjects(); buildJadual(); saveState();
+}
+function removeSubject(idx){
+  if(idx > -1 && idx < SUBJECTS_ALL.length){
+    SUBJECTS_ALL.splice(idx,1);
+    renderSubjects(); buildJadual(); saveState();
+  }
+}
+
+/* ============== JADUAL (BORANG + REKOD) ============== */
+function ensureRow(tingkatan, kelas, defaults){
+  const tKey = normTingkatan(tingkatan);
+  const kKey = normKelas(kelas);
+  let rec = data.find(d => !d.confirmed && normTingkatan(d.tingkatan)===tKey && normKelas(d.kelas)===kKey);
+  if(!rec){
+    rec = {
+      tingkatan: tKey,
+      kelas: kKey,
+      masa: Number(defaults?.masa ?? 5),
+      subjek: String(defaults?.subjek ?? 'BI').toUpperCase(),
+      guru: String(defaults?.guru ?? '').toUpperCase(),
+      confirmed: false
+    };
+    data.push(rec);
+  }else{
+    rec.tingkatan = tKey; rec.kelas = kKey;
+  }
+  if(typeof rec.confirmed !== 'boolean') rec.confirmed = false;
+  return rec;
+}
+function buildJadual(){
+  const tbl = document.getElementById("jadualSubjekUtama");
+  if(!tbl) return;
+
+  let html = `<thead>
+    <tr><th colspan="5" class="header-utama">SUBJEK UTAMA</th></tr>
+    <tr class="subhead-utama">
+      <th>CLASS</th>
+      <th>BIL WAK</th>
+      <th>NAMA SUBJEK</th>
+      <th>NAMA GURU</th>
+      <th>TINDAKAN</th>
+    </tr>
+  </thead><tbody>`;
+
+  TINGKATAN_ORDER.forEach(ting=>{
+    const tingKey = normTingkatan(ting);
+    html += `<tr class="tingkatan-row"><td colspan="5">TINGKATAN ${tingKey}</td></tr>`;
+    const classesForTing = (tingKey === 'PERALIHAN') ? PERALIHAN_CODES : CLASS_CODES;
+    classesForTing.forEach(code=>{
+      const kelas = normKelas(code);
+      const rec = ensureRow(tingKey, kelas, {masa:5, subjek:"BI", guru:""});
+
+      const masaOpts = Array.from({length:10}, (_,i)=>i+1)
+        .map(v => `<option value="${v}" ${v===rec.masa ? "selected" : ""}>${v}</option>`).join("");
+      const subjekOpts = effectiveSubjects()
+        .map(s => `<option value="${s.sing}" ${s.sing===rec.subjek ? "selected" : ""}>${s.name}</option>`).join("");
+      const namesSet = new Set(TEACHERS.map(x=>x.name));
+      let guruOpts = `<option value=""></option>`;
+      guruOpts += TEACHERS.map(t=>{
+        const val = t.name; const label = t.sing || t.name;
+        const sel = (val === rec.guru) ? 'selected' : '';
+        return `<option value="${val}" ${sel}>${label}</option>`;
+      }).join("");
+      if(rec.guru && !namesSet.has(rec.guru)){
+        guruOpts = `<option value="${rec.guru}" selected>${rec.guru}</option>` + guruOpts;
+      }
+
+      const disabled = rec.confirmed ? 'disabled' : '';
+      html += `<tr>
+        <td>${kelas}</td>
+        <td><select class="inp-masa" data-ting="${tingKey}" data-kelas="${kelas}">${masaOpts}</select></td>
+        <td><select class="inp-subjek" data-ting="${tingKey}" data-kelas="${kelas}">${subjekOpts}</select></td>
+        <td><select class="inp-guru" data-ting="${tingKey}" data-kelas="${kelas}">${guruOpts}</select></td>
+        <td>
+          <button class="btn btn-sm btn-ghost btn-teruskan" data-ting="${tingKey}" data-kelas="${kelas}" ${disabled}>Teruskan</button>
+        </td>
+      </tr>`;
+    });
+  });
+
+  html += `</tbody>`;
+  tbl.innerHTML = html;
+
+  // binding
+  tbl.querySelectorAll('.inp-masa').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const rec = ensureRow(sel.dataset.ting, sel.dataset.kelas);
+      rec.masa = parseInt(sel.value,10) || 0; rec.confirmed = false;
+      paparRumusan(); saveState();
+    });
+  });
+  tbl.querySelectorAll('.inp-subjek').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const rec = ensureRow(sel.dataset.ting, sel.dataset.kelas);
+      rec.subjek = String(sel.value||'').toUpperCase(); rec.confirmed = false;
+      paparRumusan(); saveState();
+    });
+  });
+  tbl.querySelectorAll('.inp-guru').forEach(sel=>{
+    sel.addEventListener('change', ()=>{
+      const rec = ensureRow(sel.dataset.ting, sel.dataset.kelas);
+      rec.guru = String(sel.value||'').toUpperCase(); rec.confirmed = false;
+      paparRumusan(); saveState();
+    });
+  });
+  tbl.querySelectorAll('.btn-teruskan').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const rec = ensureRow(btn.dataset.ting, btn.dataset.kelas);
+      if(!rec.subjek || !rec.masa || !rec.kelas || !rec.tingkatan){ alert('Lengkapkan Subjek, Bil Waktu, Kelas & Tingkatan.'); return; }
+      if(!rec.guru){ alert('Sila pilih Nama Guru.'); return; }
+
+      const isDup = data.some(d => (
+        d !== rec && d.confirmed &&
+        normTingkatan(d.tingkatan)===normTingkatan(rec.tingkatan) &&
+        normKelas(d.kelas)===normKelas(rec.kelas) &&
+        String(d.subjek).toUpperCase()===String(rec.subjek).toUpperCase() &&
+        Number(d.masa)===Number(rec.masa)
+      ));
+      if(isDup){ alert('Peringatan: Data telah diisi untuk kombinasi ini.'); return; }
+
+      data.push({
+        tingkatan: normTingkatan(rec.tingkatan),
+        kelas: normKelas(rec.kelas),
+        masa: Number(rec.masa)||0,
+        subjek: String(rec.subjek||'').toUpperCase(),
+        guru: String(rec.guru||'').toUpperCase(),
+        confirmed: true
+      });
+      rec.guru = ''; // kosongkan untuk input seterusnya
+      saveState(); buildJadual(); paparRumusan();
+    });
+  });
+}
+
+/* ============== RUMUSAN ============== */
+function paparRumusan(){
+  const groupGuru = {};
+  const groupKelas = {};
+  const groupSubjek = {};
+
+  data.forEach(item=>{
+    if(!item.confirmed) return;
+    const masa = Number(item.masa)||0;
+    const tingLabel = (item.tingkatan==='PERALIHAN') ? 'PERALIHAN' : `T${item.tingkatan}`;
+    const kelasKey = `${tingLabel} ${item.kelas}`;
+    // Guru
+    if(item.guru){
+      if(!groupGuru[item.guru]) groupGuru[item.guru] = { kelasSubjek:[], total:0 };
+      groupGuru[item.guru].kelasSubjek.push(`${kelasKey} (${item.subjek})`);
+      groupGuru[item.guru].total += masa;
+    }
+    // Kelas
+    if(!groupKelas[kelasKey]) groupKelas[kelasKey] = { subjekGuru:[], total:0 };
+    const guruSing = (()=>{
+      const t = TEACHERS.find(x=>x.name===item.guru);
+      return t ? (t.sing || t.name) : (item.guru||'');
+    })();
+    groupKelas[kelasKey].subjekGuru.push(`${item.subjek}${guruSing?` - ${guruSing}`:''}`);
+    groupKelas[kelasKey].total += masa;
+    // Subjek
+    const subjKey = String(item.subjek||'').toUpperCase();
+    if(!subjKey) return;
+    if(!groupSubjek[subjKey]) groupSubjek[subjKey] = { kelasGuru:[], total:0 };
+    groupSubjek[subjKey].kelasGuru.push(`${kelasKey}${guruSing?` - ${guruSing}`:''}`);
+    groupSubjek[subjKey].total += masa;
+  });
+
+  // Render Guru
+  let htmlGuru = '<table><tr><th>Nama Guru</th><th>Subjek & Kelas</th><th>Jumlah Masa</th></tr>';
+  for(const guru in groupGuru){
+    const t = TEACHERS.find(x=>x.name===guru);
+    const lbl = t ? (t.sing || t.name) : guru;
+    htmlGuru += `<tr><td>${lbl}</td><td>${groupGuru[guru].kelasSubjek.join(', ')}</td><td>${groupGuru[guru].total}</td></tr>`;
+  }
+  htmlGuru += '</table>';
+  const outGuru = document.getElementById('output'); if(outGuru) outGuru.innerHTML = htmlGuru;
+
+  // Render Kelas
+  let htmlKelas = '<table><tr><th>Kelas</th><th>Subjek - Guru</th><th>Jumlah Masa</th></tr>';
+  for(const k in groupKelas){
+    htmlKelas += `<tr><td>${k}</td><td>${groupKelas[k].subjekGuru.join(', ')}</td><td>${groupKelas[k].total}</td></tr>`;
+  }
+  htmlKelas += '</table>';
+  const outKelas = document.getElementById('outputKelas'); if(outKelas) outKelas.innerHTML = htmlKelas;
+
+  // Render Subjek
+  let htmlSubjek = '<table><tr><th>Subjek</th><th>Kelas - Guru</th><th>Jumlah Masa</th></tr>';
+  for(const s in groupSubjek){
+    htmlSubjek += `<tr><td>${s}</td><td>${groupSubjek[s].kelasGuru.join(', ')}</td><td>${groupSubjek[s].total}</td></tr>`;
+  }
+  htmlSubjek += '</table>';
+  const outSubj = document.getElementById('outputSubjek'); if(outSubj) outSubj.innerHTML = htmlSubjek;
+}
+
+/* ============== BACKUP (EXPORT/IMPORT/RESET) ============== */
+function exportJSON(){
+  const payload = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    teachers: TEACHERS,
+    subjects: SUBJECTS_ALL,
+    records: data
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'unjuran_jadual_offline.json';
+  document.body.appendChild(a); a.click();
+  a.remove(); URL.revokeObjectURL(url);
+}
+function importJSON(file){
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const json = JSON.parse(e.target.result||'{}');
+      if(!json) throw new Error('Fail rosak.');
+      // Ganti semua koleksi dengan selamat
+      TEACHERS.length = 0;
+      (json.teachers||[]).forEach(x=>{
+        if(!x) return;
+        TEACHERS.push({
+          name:String(x.name||'').toUpperCase(),
+          sing:String(x.sing||x.name||'').toUpperCase()
+        });
+      });
+      SUBJECTS_ALL = (json.subjects||[]).map(s=>({
+        name:String(s.name||'').toUpperCase(),
+        sing:String(s.sing||s.name||'').toUpperCase()
+      })).filter(s=>s.name);
+      data = (json.records||[]).map(r=>({
+        tingkatan:normTingkatan(r.tingkatan),
+        kelas:normKelas(r.kelas),
+        masa:Number(r.masa)||0,
+        subjek:String(r.subjek||'').toUpperCase(),
+        guru:String(r.guru||'').toUpperCase(),
+        confirmed:!!r.confirmed
+      }));
+      renderTeacherTable(); renderSubjects(); buildJadual(); paparRumusan(); saveState();
+      alert('Import berjaya.');
+    }catch(err){
+      console.error(err);
+      alert('Gagal import: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+function resetAll(){
+  if(!confirm('Padam semua data dalam pelayar ini? Tindakan tidak boleh diundur.')) return;
+  localStorage.removeItem(LS_TEACHERS_KEY);
+  localStorage.removeItem(LS_DATA_KEY);
+  localStorage.removeItem(LS_SUBJECTS_KEY);
+  localStorage.removeItem(LS_HIDE_GURU_UI_KEY);
+  localStorage.removeItem(LS_HIDE_SUBJ_UI_KEY);
+  localStorage.removeItem(LS_SAVED_AT);
+  // kosongkan memori
+  TEACHERS.length = 0; SUBJECTS_ALL = []; data = [];
+  renderTeacherTable(); renderSubjects(); buildJadual(); paparRumusan(); stampSaved();
+}
+
+/* ============== IMPORT DARI GOOGLE SHEETS (GAS URL) ============== */
+function setGasStatus(text, isError=false){
+  const el = document.getElementById('gasStatus');
+  if(el){ el.textContent = text || ''; el.style.color = isError ? '#dc2626' : '#475569'; }
+}
+async function fetchFromGAS(url){
+  try{
+    if(!url){ alert('Sila tampal Web App URL GAS.'); return; }
+    // Tambah action=read jika tiada query
+    const full = url.includes('action=') ? url : (url + (url.includes('?') ? '&' : '?') + 'action=read');
+    setGasStatus('Memuat dari Google Sheets...');
+    const res = await fetch(full, { method:'GET', mode:'cors', cache:'no-store' });
+    const text = await res.text();
+    let json = null;
+    try{ json = JSON.parse(text); }catch(_){ throw new Error('Gagal parse JSON dari pelayan'); }
+    if(json && json.success === false){ throw new Error(json.error || 'Ralat pelayan'); }
+
+    const tArr = Array.isArray(json.teachers) ? json.teachers : (Array.isArray(json.guru)? json.guru : []);
+    const sArr = Array.isArray(json.subjects) ? json.subjects : (Array.isArray(json.subjek)? json.subjek : []);
+    const jArr = Array.isArray(json.jadual) ? json.jadual : [];
+
+    // Ganti TEACHERS
+    TEACHERS.length = 0;
+    tArr.forEach(x=>{
+      if(!x) return;
+      const name = String(x.name||x.NAMA||'').toUpperCase();
+      if(!name) return;
+      const sing = String(x.sing??x.SING??x.SINGKATAN??x.name??'').toUpperCase();
+      TEACHERS.push({ name, sing });
+    });
+
+    // Ganti SUBJECTS
+    SUBJECTS_ALL = (Array.isArray(sArr)?sArr:[]).map(s=>({
+      name: String(s.name||s.NAMA||'').toUpperCase(),
+      sing: String(s.sing??s.SING??s.SINGKATAN??s.name??'').toUpperCase()
+    })).filter(s=>s.name);
+
+    // Ganti data jadual
+    data = (Array.isArray(jArr)?jArr:[]).map(r=>({
+      tingkatan: normTingkatan(r?.tingkatan ?? r?.TINGKATAN ?? r?.ting ?? ''),
+      kelas: normKelas(r?.kelas ?? r?.KELAS ?? ''),
+      masa: Number(r?.masa ?? r?.MASA ?? 0),
+      subjek: String(r?.subjek ?? r?.SUBJEK ?? '').toUpperCase(),
+      guru: String(r?.guru ?? r?.GURU ?? '').toUpperCase(),
+      confirmed: !!(r?.confirmed ?? r?.SAH ?? r?.CONFIRMED)
+    }));
+
+    renderTeacherTable(); renderSubjects(); buildJadual(); paparRumusan(); saveState();
+    setGasStatus('Selesai import dari Google Sheets.');
+    alert('Data dimuat dari Google Sheets.');
+  }catch(err){
+    console.error(err);
+    setGasStatus('Gagal memuat dari Google Sheets.', true);
+    alert('Gagal memuat: ' + (err?.message || err));
+  }
+}
+
+/* ============== INIT ============== */
+function initializeApp(){
+  // 1) Muat cache
+  loadState();
+  // 2) Papar UI awal
+  renderTeacherTable();
+  renderSubjects();
+  buildJadual();
+  paparRumusan();
+  initToggleUI();
+  // 3) Butang toolbar
+  document.getElementById('btnExport')?.addEventListener('click', exportJSON);
+  document.getElementById('fileImport')?.addEventListener('change', (e)=>{
+    const f = e.target.files?.[0]; if(f) importJSON(f); e.target.value='';
+  });
+  document.getElementById('btnReset')?.addEventListener('click', resetAll);
+  // 4) GAS URL demo: persist + load
+  const gasUrlInput = document.getElementById('gasUrlDemo');
+  const btnLoadGas = document.getElementById('btnLoadGas');
+  try{
+    const saved = localStorage.getItem('rumusan_guru_gas_url_demo')||'';
+    if(gasUrlInput && !gasUrlInput.value) gasUrlInput.value = saved;
+    gasUrlInput?.addEventListener('change', ()=>{
+      localStorage.setItem('rumusan_guru_gas_url_demo', (gasUrlInput.value||'').trim());
+    });
+    btnLoadGas?.addEventListener('click', ()=>{
+      const url = (gasUrlInput?.value||localStorage.getItem('rumusan_guru_gas_url_demo')||'').trim();
+      fetchFromGAS(url);
+    });
+  }catch(_){ }
+  // Jika kali pertama tiada subjek tersimpan, isi default dan simpan
+  if((SUBJECTS_ALL||[]).length===0){
+    SUBJECTS_ALL = DEFAULT_SUBJECTS.map(x=>({name:x, sing:x}));
+    renderSubjects(); saveState();
+  }
+}
+initializeApp();
+</script>
+<!-- Sertakan kod/data Bar Gap (jika ada) -->
+<script src="bar_gap_data.js"></script>
+<script src="bar_gap_app.js"></script>
+</body>
+</html>
